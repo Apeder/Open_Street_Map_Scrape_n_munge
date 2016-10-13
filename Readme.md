@@ -1,4 +1,4 @@
-Open Street Map Scraping and SQL DB Port
+Open Street Map Data Cleaning and SQL Import
 ==========
 
 When I moved to Philadelphia in 2003 to attend UPenn, I had spent the previous 18 years growing up in rural Northern Nevada, where my family has lived since just before 1900. As Philly was my entry in the wider, urban world of the East Coast, the town, its food, its art, its history and culture will always hold special charm. 
@@ -14,13 +14,14 @@ Bicylcing
 Universities
 Art museums
 
-## Problems encountered in your map
+## Data Problems Encountered
 
+### What Streets are in Philly, and which are not? 
 The best list of all streets in Philly was at http://www.geographic.org/streetview/usa/pa/philadelphia.html, and given some good parsing itself, we could specify that streetnames need to match within a few characters to be considered valid. 
 
 [Philly.gov #fail](./Philly_gov_search_kaput.jpg)
 
-
+### Garden Variety Typos and Abbreviations
 Street name typos
 'Atreet': {'Arch Atreet'}
 'PIke': {'Princeton PIke'},
@@ -36,8 +37,12 @@ N Olden Ave',
               'E Lancaster Ave',
               'E. Mt Airy Ave',
 
+Some require street or avenue to be appended, others aren't in philly, like Mallon Avenue
+
 Strange orphan words
 'Bigler': {'Bigler'},
+
+No Broadway in Philly
 'Broadway': {'373 North Broadway',
               'North Broadway',
               'South Broadway'},
@@ -108,6 +113,20 @@ All address fields
  'addr:suite': 7,
  'addr:unit': 1,
 
+ These were especially stubborn:
+ {'19083(610)': {'Brookline Boulevard Havertown 19083(610)'},
+             '37th': {'North 37th'},
+             '43rd': {'North 43rd'},
+             '80': {'North Lewis Road Unit #80'},
+             'Avenue,': {'West Girard Avenue,'},
+             'Center': {'Town Center'},
+             'Jersey': {'New Jersey'},
+             'NJ': {'NJ'},
+             'NJ-73': {'NJ-73'},
+             'PA': {'East Lincoln Highway PA'},
+             'Route': {'Route'},
+             'US': {'US', 'US and US'}})
+
 Full addresses need to be parsed, and the non-street values assigned to the correct addr: sub tags.  If it begins and ends with numbers? Use python address parser? 
 
 Abbreviations at the front of addresses need to be expanded. 
@@ -118,11 +137,34 @@ If any lowercase letters are right next to an uppercase, 'tP', space needs to be
 
 All caps need to be lowered 
 
+Though it took a while, regular expressions were handy.  These two interactive Regex sites were very helpful to test expressions before running code. 
+
+http://www.pyregex.com/
+http://www.regexpal.com/ 
+http://pythex.org/
 
 Overview of the Data
 Other ideas about the datasets
 Try to include snippets of code and problematic tags (see MongoDB Sample Project or SQL Sample Project) and visualizations in your report if they are applicable.
 Use the following code to take a systematic sample of elements from your original OSM region. Try changing the value of k so that your resulting SAMPLE_FILE ends up at different sizes. When starting out, try using a larger k, then move on to an intermediate k before processing your whole dataset.
+
+Would be easier to use lists of streetnames and regular expressions to add validation to user input fields, ideally via a dropdown menu that narrows matches as you begin to type. This is difficult, as no canonical reference list of streets in philadelphia is readily available as a clean text file. 
+
+Did find this csv on the Philly gov open data site: https://www.opendataphilly.org/dataset/street-name-alias-list/resource/2c7db78e-69a0-4d7d-bc60-c4415052a4d0
+
+http://boto.cloudhackers.com/en/latest/s3_tut.html#storing-large-data
+Was an easy way to play with AWS, though getting the credentials worked out required changing the bucket policy: http://stackoverflow.com/questions/10854095/boto-exception-s3responseerror-s3responseerror-403-forbidden
+
+Still, hard to complain about the wonderful simplicity of AWS handy command line interface:
+aws s3 cp philadelphia_pennsylvania.osm s3://apederphiladelphia/philadelphia_openstreet.osm
+
+Then had to create a key-pair for EC2 before we can analyze the data using EMR
+aws ec2 create-key-pair --key-name MyKeyPair
+
+https://aws.amazon.com/python/ boto3
+http://docs.aws.amazon.com//ElasticMapReduce/latest/ReleaseGuide/emr-spark.html
+http://docs.aws.amazon.com/datapipeline/latest/DeveloperGuide/dp-importexport-ddb-part1.html
+
 
 
 
