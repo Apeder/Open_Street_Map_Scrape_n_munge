@@ -19,7 +19,7 @@ Art museums
 ### What Streets are in Philly, and which are not? 
 The best list of all streets in Philly was at http://www.geographic.org/streetview/usa/pa/philadelphia.html, and given some good parsing itself, we could specify that streetnames need to match within a few characters to be considered valid. 
 
-[Philly.gov #fail](./Philly_gov_search_kaput.jpg)
+![Philly.gov #fail](./Philly_gov_search_kaput.jpg)
 
 ### Garden Variety Typos and Abbreviations
 Street name typos
@@ -152,6 +152,14 @@ Would be easier to use lists of streetnames and regular expressions to add valid
 
 Did find this csv on the Philly gov open data site: https://www.opendataphilly.org/dataset/street-name-alias-list/resource/2c7db78e-69a0-4d7d-bc60-c4415052a4d0
 
+However, it's not a complete list, and it's rife with typos
+https://www.opendataphilly.org/dataset/street-place-names/resource/ed10ab8b-e998-4853-b440-81df22c39bfc
+
+http://gis.phila.gov/gisdata/ODP/STR_PlaceNames.csv
+
+"tiger:name_base" turned out to be the best reference source. 
+
+
 http://boto.cloudhackers.com/en/latest/s3_tut.html#storing-large-data
 Was an easy way to play with AWS, though getting the credentials worked out required changing the bucket policy: http://stackoverflow.com/questions/10854095/boto-exception-s3responseerror-s3responseerror-403-forbidden
 
@@ -165,7 +173,26 @@ https://aws.amazon.com/python/ boto3
 http://docs.aws.amazon.com//ElasticMapReduce/latest/ReleaseGuide/emr-spark.html
 http://docs.aws.amazon.com/datapipeline/latest/DeveloperGuide/dp-importexport-ddb-part1.html
 
+Is there a zero street in philadelphia? 
+'Fourty-second street', 'Thirty fifth street',
+       'Thirty-fifth street', 'Fiftieth street', 'Fourty third street',
+       'Fourty-third street', 'St marks street', 'St albans street',
+       'Fourty fifth street', 'Fourty-fifth street', 'Vodges street',
+       'Cobbs creek pky', 'S 58th street', 'Twelfth street', '07th street',
+       '7th street', 'Seventh street', '03rd street', '3rd street',
+       'Third street', 'Thirteenth street', 'St michael drive',
+       '02nd street', '2nd street', 'Second street', '04th street',
+       '4th street', 'Fourth street', 'St christopher drive',
+       'Eleventh street', '09th street', '9th street', 'Ninth street',
+       '05th street', '5th street', 'Fifth street', 'Tenth street',
+       '08th street', '8th street', 'Eighth street', '06th street',
+0 street', '0th street', 'Zero street
 
+Another project might be to write a validator in Django for Open Street Map' iD online editor
+https://docs.djangoproject.com/en/1.10/ref/validators/
 
+![OsmiDeditor](./OSMeditor.png)
 
+http://wiki.openstreetmap.org/wiki/Comparison_of_editors#online
+Wasn't incredibly successful. 
 
