@@ -19,7 +19,7 @@ Art museums
 ### What Streets are in Philly, and which are not? 
 The best list of all streets in Philly was at http://www.geographic.org/streetview/usa/pa/philadelphia.html, and given some good parsing itself, we could specify that streetnames need to match within a few characters to be considered valid. 
 
-![Philly.gov #fail](./Philly_gov_search_kaput.jpg)
+![Philly.gov #fail](https://github.com/Apeder/Open_Street_Map_Scrape_n_munge/blob/master/Philly_gov_search_kaput.png)
 
 ### Garden Variety Typos and Abbreviations
 Street name typos
@@ -159,6 +159,22 @@ http://gis.phila.gov/gisdata/ODP/STR_PlaceNames.csv
 
 "tiger:name_base" turned out to be the best reference source. 
 
+Now that we have a list of the street names, we can use fuzzy matching to ensure street names are valid and are spelled correctly http://streamhacker.com/2011/10/31/fuzzy-string-matching-python/
+https://marcobonzanini.com/2015/02/25/fuzzy-string-matching-in-python/
+https://github.com/seatgeek/fuzzywuzzy
+
+If we wanted to be super thorough, we could use the Census Bureau's latest TIGER Roads National Geodatabase:
+http://www.census.gov/geo/maps-data/data/tiger-geodatabases.html
+http://www2.census.gov/geo/pdfs/maps-data/data/tiger/tgrshp2016/2016_TIGER_GDB_Record_Layouts.pdf
+
+[Tiger National Roads](./natlroads.png)
+
+But it's 2.1 GB. Would have to upload it to S3 to make use of it. Perhaps it could be used for n-gram matching? Would that be faster? Databricks/Spark is probably a better way to test if this is possible. 
+
+http://www.chokkan.org/software/simstring/
+Could build simstring from source and make a python module
+These guys use SimString with a TF/IDF pre-processing and Support Vector Machine: 
+http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.251.2922&rep=rep1&type=pdf
 
 http://boto.cloudhackers.com/en/latest/s3_tut.html#storing-large-data
 Was an easy way to play with AWS, though getting the credentials worked out required changing the bucket policy: http://stackoverflow.com/questions/10854095/boto-exception-s3responseerror-s3responseerror-403-forbidden
@@ -195,4 +211,6 @@ https://docs.djangoproject.com/en/1.10/ref/validators/
 
 http://wiki.openstreetmap.org/wiki/Comparison_of_editors#online
 Wasn't incredibly successful. 
+
+Databricks is probably the best way to try Spark to speed up the analysis. Ehhh... lots of extra work. Maybe Elastic Beanstalk to build a simple mapping app that creates SQL queries from user input and maps using d3? 
 
