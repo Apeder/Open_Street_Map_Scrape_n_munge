@@ -149,6 +149,7 @@ parking|243
 bench|235
 bank|217
 cafe|210
+```
 
 ### Religious Institutions - search for wooder ice instead?
 ```sql
