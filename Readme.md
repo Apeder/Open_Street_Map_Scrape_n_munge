@@ -3,7 +3,7 @@ Open Street Map Data Cleaning and SQL Import
 
 When I moved to Philadelphia in 2003 to attend UPenn, I had spent the previous 18 years growing up in rural Northern Nevada, where my family has lived since just before 1900. As Philly was my entry in the wider, urban world of the East Coast, the town, its food, its art, its history and culture will always hold special charm. 
 
-This project scrapes an Open Street Map (OSM) XML file and imports the data to a SQL databse that we can query to explore the map elements in the Philadelphia metro area. The first link below indicates the boundaries of the XML file, and to save time, the XML file was downloaded from mapzen from the second. 
+This project scrapes an [Open Street Map (OSM) XML](http://wiki.openstreetmap.org/wiki/OSM_XML) file and imports the data to a SQL databse that we can query to explore the map elements in the Philadelphia metro area. The first link below indicates the boundaries of the XML file, and to save time, the XML file was downloaded from mapzen from the second. 
 
 Philadlphia, PA - City of Brotherly Love
 
@@ -12,15 +12,17 @@ Philadlphia, PA - City of Brotherly Love
 
 ## Dataset Overview
 
-There are over 2.8 million node tags, over 261 thousand way tags and only about 4000 relation tags. There are also 
-over 1.7 million tags nested below node, way and relation elements.
-http://wiki.openstreetmap.org/wiki/OSM_XML
+There are over 2.8 million node tags, over 261 thousand way tags and only about 4000 relation tags. There are also over 1.7 million tags nested below node, way and relation elements, though only 7433 node tags and 9698 way tags with addr:street attributes. 
 
-### Number of nodes, ways, etc.
+### Most Common Node Tag Types
+```
+('created_by', 198001), ('highway', 15142), ('name', 12695), ('amenity', 7866), ('addr:street', 7433), ('addr:housenumber', 7284), ('ele', 5987), ('addr:city', 5686), ('gnis:feature_id', 4406), ('power', 4014), ('addr:state', 3477), ('addr:postcode', 3354), ('gnis:created', 3304), ('gnis:county_id', 3183), ('gnis:state_id', 3180), ('source', 3009), ('crossing', 2466), ('railway', 2130), ('shop', 1866), ('building', 1831), ('place', 1630), ('is_in', 1592), ('gnis:ST_num', 1580), ('gnis:County', 1580), ('gnis:County_num', 1580), ('gnis:ST_alpha', 1580), ('gnis:id', 1579), ('gnis:Class', 1579), ('import_uuid', 1578)
+```
 
+### Number of Nodes, Ways and Associated Tags
 ```sql
 sqlite> SELECT COUNT(*) FROM Nodes 
-2811847
+2811847 
 sqlite> SELECT COUNT(*) FROM Ways;
 261503
 sqlite> SELECT COUNT(*) FROM Way_Tags;
@@ -38,7 +40,7 @@ sqlite> SELECT COUNT(DISTINCT(i.uid))
 1822
 ```
 
-### Top ten users
+### Top Ten Users
 ```sql
 SELECT e.user, COUNT(*) as num
 FROM (SELECT user FROM Nodes UNION ALL SELECT user FROM ways) e
@@ -58,7 +60,68 @@ eugenebata|62532
 bot-mode|44946
 ```
 
-### Top post codes
+### Social Services 
+```sql
+SELECT DISTINCT Node_Tags.value, COUNT(*) c
+FROM Node_Tags
+WHERE Node_Tags.key = 'social_facility'
+GROUP BY  Node_Tags.value
+ORDER BY c DESC;
+
+food_bank|272
+soup_kitchen|3
+assisted_living|1
+food_pantry|1
+group_home|1
+```
+
+### Top 20 Shop Types
+```sql
+SELECT DISTINCT Node_Tags.value, COUNT(*) c
+FROM Node_Tags
+WHERE Node_Tags.key = 'shop'
+GROUP BY  Node_Tags.value
+ORDER BY c DESC
+LIMIT 20;
+
+convenience|266
+supermarket|157
+hairdresser|144
+clothes|137
+car_repair|79
+farm|72
+alcohol|68
+beauty|54
+furniture|49
+bakery|48
+dry_cleaning|36
+department_store|35
+doityourself|35
+laundry|32
+books|29
+car|29
+jewelry|25
+mobile_phone|24
+bicycle|23
+gift|23
+```
+### Power Infrastructure
+```sql
+SELECT DISTINCT Node_Tags.value, COUNT(*) c
+FROM Node_Tags
+WHERE Node_Tags.key = 'power'
+GROUP BY  Node_Tags.value
+ORDER BY c DESC;
+
+tower|3615
+pole|373
+generator|17
+station|4
+transformer|4
+sub_station|1
+```
+
+### Top Zipcodes
 ```sql
 SELECT tags.value, COUNT(*) as count 
 FROM (SELECT * FROM Node_Tags 
@@ -94,7 +157,7 @@ Top zipcode is in NJ...
 19027|51
 ```
 
-### Cities by count descending
+### Top Cities
 ```sql
 SELECT tags.value, COUNT(*) as count 
 FROM (SELECT * FROM Node_Tags UNION ALL 
@@ -130,7 +193,7 @@ Warminster|83
 Lower Chichester;Marcus Hook;Chichester|74
 ```
 
-### Top ten ammenities 
+### Top Ten Ammenities 
 ```sql
 SELECT value, COUNT(*) as num
 FROM Node_Tags
@@ -151,7 +214,7 @@ bank|217
 cafe|210
 ```
 
-### Religious Institutions - search for wooder ice instead?
+### Religious Institutions
 ```sql
 SELECT Node_Tags.value, COUNT(*) as num
 FROM Node_Tags 
@@ -180,7 +243,7 @@ WHERE Node_Tags.key='cuisine';
 482
 ```
 
-### Number of different kinds of restaurants
+### Number of Different Kinds of Restaurants
 ```sql
 SELECT Node_Tags.value, COUNT(*) as num
 FROM Node_Tags 
@@ -206,20 +269,49 @@ steak_house|6
 vietnamese|6
 chicken|5
 ```
+### Plentiful Wooder Ice
+```sql
+SELECT * FROM Node_tags WHERE value LIKE '%water ice%';
 
-### All address fields
+288055176|name|Rita's Water Ice|regular|27400
+288055176|cuisine|Water Ice|regular|27402
+796858057|name|Rita's Water Ice|regular|265005
+975303670|name|Rita's Water Ice|regular|266273
+1129804118|name|Petrucci's Ice Cream and Water Ice|regular|273989
+1687402740|housename|Rita's Water Ice|addr|282285
+1740624913|name|Cabana Water Ice|regular|283457
+2002984943|housename|Rita's Water Ice|addr|285015
+2343299340|name|Ritas Water Ice|regular|289362
+2699346738|name|Rita's Water Ice|regular|294372
+2795611956|name|Rita's Water Ice|regular|298445
+2818610758|name|Rita's Water Ice|regular|298747
+2876251700|name|John's Water Ice|regular|300036
+3342901422|name|Rita's Water Ice|regular|302492
+3454225867|name|Georges Water Ice|regular|305664
+4307284690|name|Rita's Water Ice|regular|316506
+4313660216|name|Gracie's Water Ice|regular|316561
+4331629329|name|Rita's Water Ice|regular|317801
+4352921245|name|Georgio's Water Ice|regular|326844
+4358135189|name|Rita's water ice|regular|327638
+4358135189|en|Rita's water ice|name|327639
 ```
-  addr:city': 1329,
- 'addr:country': 203,
- 'addr:full': 2,
- 'addr:housename': 36,
- 'addr:housenumber': 1426,
- 'addr:interpolation': 28,
- 'addr:postcode': 974,
- 'addr:state': 793,
- 'addr:street': 1752,
- 'addr:suite': 7,
- 'addr:unit': 1,
+
+### All Address Fields
+```sql
+SELECT key, COUNT(*) c
+FROM Node_Tags
+WHERE key IN ('city', 'country', 'full', 'housename', 'housenumber', 'postcode', 'street', 'state')
+GROUP BY key
+ORDER BY c DESC;
+
+street|7433
+housenumber|7315
+city|6639
+state|3500
+postcode|3359
+country|1174
+housename|214
+full|29
 ```
 
 ## Data Problems Encountered
@@ -260,6 +352,33 @@ if call_me:
   <tag k="addr:postcode" v="19083"/>
   <tag k="addr:housenumber" v="1"/>
  </node>
+```
+
+### Garden Variety Typos and Abbreviations
+The 'filter_words()' function scans each word in the addr:street field and replaces mispellings and abbreviations with a mapping. 
+
+#### Street name typos
+```
+'Atreet': {'Arch Atreet'}
+'PIke': {'Princeton PIke'},
+'Sreet': {'Bridge Sreet'},
+'Sstreet': {'South 9th Sstreet'},
+'Steet': {'South 18th Steet'},
+```
+
+#### Over abbreviated addresses
+```
+'N Olden Ave',
+'S. 41st',
+'Shannondell Blvd',
+'Portsmouth Ct',
+'Deerpath Dr',
+'Anderson Rd',
+'S 19th St'
+```
+#### Improper Case
+```
+'ROAD': {'DAVISVILLE ROAD', 'TERWOOD ROAD', 'TOWNSHIP LINE ROAD'},
 ```
 
 ### Which Streets Are in Philly, and Which Are Not? 
@@ -324,6 +443,8 @@ The 'Way' element 'name' attributes, however, once filtered to exclude non-stree
 
 As building an approximate string matching algorithm from scratch would be time consuming, the open source [FuzzyWuzzy](https://github.com/seatgeek/fuzzywuzzy) approximate string matching module came in handy. The module is based on [Levenshtein distance](https://en.wikipedia.org/wiki/Levenshtein_distance), and when given a string and list of strings as input, outputs the highest ranked match between the string provided and the choices in the list.
 
+The 'fix_street_names()' function applies a fuzzy string matching algorithm to the edge case strings that the conventional word mapping doesn't easily fix. 
+
 For example:
 
 ```python
@@ -360,61 +481,11 @@ If we wanted to be super thorough, we could use the Census Bureau's latest TIGER
 
 The file is 2.1 GB, though, so we would have to upload it to S3 and rewrite our code in Spark to make use of it. Perhaps it could be used for n-gram matching? Would that be faster? Databricks/Spark is probably a better way to test if this is possible.  It's also not clear how to query this dataset by city or state, so more processing would be required.
 
-### Garden Variety Typos and Abbreviations
-The 'filter_words()' function scans each word in the addr:street field and replaces mispellings and abbreviations with a mapping. 
-
-#### Street name typos
-```
-'Atreet': {'Arch Atreet'}
-'PIke': {'Princeton PIke'},
-'Sreet': {'Bridge Sreet'},
-'Sstreet': {'South 9th Sstreet'},
-'Steet': {'South 18th Steet'},
-```
-
-#### Over abbreviated addresses
-```
-'N Olden Ave',
-'S. 41st',
-'Shannondell Blvd',
-'Portsmouth Ct',
-'Deerpath Dr',
-'Anderson Rd',
-'S 19th St'
-```
-#### Improper Case
-```
-'ROAD': {'DAVISVILLE ROAD', 'TERWOOD ROAD', 'TOWNSHIP LINE ROAD'},
-```
 # Conclusion
+The data from the OSM XML are inconsistent and rife with errors. Though this project cleaned most street address strings, many of the other 853 tag keys appear to contain misspellings and values that correspond to other tag keys.  To ensure cleaner, consistent data in the future, three projects may be worthwhile: 
 
-Would be easier to use lists of streetnames and regular expressions to add validation to user input fields, ideally via a dropdown menu that narrows matches as you begin to type. This is difficult, as no canonical reference list of streets in philadelphia is readily available as a clean text file. 
-
-http://www.chokkan.org/software/simstring/
-Could build simstring from source and make a python module
-These guys use SimString with a TF/IDF pre-processing and Support Vector Machine: 
-http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.251.2922&rep=rep1&type=pdf
-
-http://boto.cloudhackers.com/en/latest/s3_tut.html#storing-large-data
-Was an easy way to play with AWS, though getting the credentials worked out required changing the bucket policy: http://stackoverflow.com/questions/10854095/boto-exception-s3responseerror-s3responseerror-403-forbidden
-
-Still, hard to complain about the wonderful simplicity of AWS handy command line interface:
-aws s3 cp philadelphia_pennsylvania.osm s3://apederphiladelphia/philadelphia_openstreet.osm
-
-Then had to create a key-pair for EC2 before we can analyze the data using EMR
-aws ec2 create-key-pair --key-name MyKeyPair
-
-https://aws.amazon.com/python/ boto3
-http://docs.aws.amazon.com//ElasticMapReduce/latest/ReleaseGuide/emr-spark.html
-http://docs.aws.amazon.com/datapipeline/latest/DeveloperGuide/dp-importexport-ddb-part1.html
-
-Another project might be to write a validator in Django for Open Street Map' iD online editor
-https://docs.djangoproject.com/en/1.10/ref/validators/
+* Request lists of clean street names and any other relevant data fields from local, state and federal open data projects to use as canonical references for string and n-gram matching algorithms.  It's possible that TIGER data may already meet specification, though the large file sizes would require distributed computing resources and a different programming approach, ie, [Apache Spark](http://spark.apache.org/). 
+* Deploy these algorithms via a user input validator within the two main [OSM editors](http://wiki.openstreetmap.org/wiki/Comparison_of_editors#online). This could be built with [Django](https://docs.djangoproject.com/en/1.10/ref/validators/).
+* Similarly constrain tag key-value pairs to those listed on the [OSM Wiki](http://wiki.openstreetmap.org/wiki/Map_Features) to ensure that only recognized tag key-value pairs can be entered in the dataset as tag elements. 
 
 ![OsmiDeditor](https://raw.githubusercontent.com/Apeder/Open_Street_Map_Scrape_n_munge/master/OSMeditor.png)
-
-http://wiki.openstreetmap.org/wiki/Comparison_of_editors#online
-Wasn't incredibly successful. 
-
-Databricks is probably the best way to try Spark to speed up the analysis. Ehhh... lots of extra work. Maybe Elastic Beanstalk to build a simple mapping app that creates SQL queries from user input and maps using d3? 
-
