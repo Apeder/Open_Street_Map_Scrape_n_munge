@@ -3,7 +3,7 @@ Open Street Map Data Cleaning and SQL Import
 
 When I moved to Philadelphia in 2003 to attend UPenn, I had spent the previous 18 years growing up in rural Northern Nevada, where my family has lived since just before 1900. As Philly was my entry in the wider, urban world of the East Coast, the town, its food, its art, its history and culture will always hold special charm. 
 
-This project scrapes an [Open Street Map (OSM) XML](http://wiki.openstreetmap.org/wiki/OSM_XML) file and imports the data to a SQL databse that we can query to explore the map elements in the Philadelphia metro area. The first link below indicates the boundaries of the XML file, and to save time, the XML file was downloaded from mapzen from the second. 
+This project scrapes an [Open Street Map (OSM) XML](http://wiki.openstreetmap.org/wiki/OSM_XML) file and imports the data to a SQL databse that we can query to explore the map elements in the Philadelphia metro area. The first link below indicates the boundaries of the XML file, and to save time, the XML file was downloaded from mapzen from the second.  The OSM XML for the Philly metro area tips the scales at 594 MB. 
 
 Philadlphia, PA - City of Brotherly Love
 
@@ -15,9 +15,10 @@ Philadlphia, PA - City of Brotherly Love
 There are over 2.8 million node tags, over 261 thousand way tags and only about 4000 relation tags. There are also over 1.7 million tags nested below node, way and relation elements, though only 7433 node tags and 9698 way tags with addr:street attributes. 
 
 ### Most Common Node Tag Types
-```
+
+`
 ('created_by', 198001), ('highway', 15142), ('name', 12695), ('amenity', 7866), ('addr:street', 7433), ('addr:housenumber', 7284), ('ele', 5987), ('addr:city', 5686), ('gnis:feature_id', 4406), ('power', 4014), ('addr:state', 3477), ('addr:postcode', 3354), ('gnis:created', 3304), ('gnis:county_id', 3183), ('gnis:state_id', 3180), ('source', 3009), ('crossing', 2466), ('railway', 2130), ('shop', 1866), ('building', 1831), ('place', 1630), ('is_in', 1592), ('gnis:ST_num', 1580), ('gnis:County', 1580), ('gnis:County_num', 1580), ('gnis:ST_alpha', 1580), ('gnis:id', 1579), ('gnis:Class', 1579), ('import_uuid', 1578)
-```
+`
 
 ### Number of Nodes, Ways and Associated Tags
 ```sql
@@ -42,9 +43,9 @@ sqlite> SELECT COUNT(DISTINCT(i.uid))
 
 ### Top Ten Users
 ```sql
-SELECT e.user, COUNT(*) as num
-FROM (SELECT user FROM Nodes UNION ALL SELECT user FROM ways) e
-GROUP BY e.user
+SELECT nw.user, COUNT(*) as num
+FROM (SELECT user FROM Nodes UNION ALL SELECT user FROM Ways) nw
+GROUP BY nw.user
 ORDER BY num DESC
 LIMIT 10;
 
@@ -62,11 +63,11 @@ bot-mode|44946
 
 ### Social Services 
 ```sql
-SELECT DISTINCT Node_Tags.value, COUNT(*) c
+SELECT DISTINCT Node_Tags.value, COUNT(*) num
 FROM Node_Tags
 WHERE Node_Tags.key = 'social_facility'
 GROUP BY  Node_Tags.value
-ORDER BY c DESC;
+ORDER BY num DESC;
 
 food_bank|272
 soup_kitchen|3
@@ -107,11 +108,11 @@ gift|23
 ```
 ### Power Infrastructure
 ```sql
-SELECT DISTINCT Node_Tags.value, COUNT(*) c
+SELECT DISTINCT Node_Tags.value, COUNT(*) num
 FROM Node_Tags
 WHERE Node_Tags.key = 'power'
 GROUP BY  Node_Tags.value
-ORDER BY c DESC;
+ORDER BY num DESC;
 
 tower|3615
 pole|373
@@ -386,7 +387,7 @@ The XML includes elements from a square bounding box around Philadelphia, so som
 
 One surprising discovery is that no clean, canonical list of the streets in Philadelphia is easily accessbile.  In fact, searching for this on the Philadelphia government webpage raised an immediate red flag.
 
-![Philly.gov #fail](https://github.com/Apeder/Open_Street_Map_Scrape_n_munge/blob/master/Philly_gov_search_kaput.png)
+![Philly.gov #fail](https://raw.githubusercontent.com/Apeder/Open_Street_Map_Scrape_n_munge/master/Philly_gov_search_kaput.png)
 
 Although Philly's Open Data site did have two csv files with streetnames available, neither was cleaned or comprehensive enough to use as a canoncial list for fuzzy string matching. 
 
@@ -436,9 +437,10 @@ The downside is that sometimes a 'Way' element's 'name' attribute is a street na
 ```
 Upon closer examination, the 'tiger:name_base' attribute contained 15,284 elements, and many contained typos and were obviously not streets. 
 
-```
+`
 u'Norfolk Southern Railway:Pennsylvania Railroad', u'Belmont;Green', u'United States Highway 1; Lincoln', u'Mantua;Harrison', u'Reading Railroad:Septa Railroad', u'Baltimore and Ohio Railroad:Norfolk Southern Railway', u'Franklin:Hampton', u'State Route 68; State Route 68; State Route 68A; State Route 68; State Route 68', u'United States Highway 206;Old York', u'Perry; Lincoln', u'Norfolk Southern Railway; Csx Railway; Conrail Railroad', u'Township Line;Big Oak', u'Market:United States Highway 13 (Bus)', u'Coursey; College', u'I-295:I-76', u'Early; Davis', u'of the Arts', u'\x7f\x7fBeech', u'Bridge; Main', Spring:Pond View', u'Cypress:Longacre', u'Delmar;84th', u'New Jersey Transit:Penn Central Railroad; Conrail Railroad'
-```
+`
+
 The 'Way' element 'name' attributes, however, once filtered to exclude non-street names, was comprehensive and clean enough to use as a canonical reference list for appoximate string matching. Though not perfect, with 31,489 names, chances of finding correctly spelled matches are high, and the cases tested from this dataset worked well. 
 
 As building an approximate string matching algorithm from scratch would be time consuming, the open source [FuzzyWuzzy](https://github.com/seatgeek/fuzzywuzzy) approximate string matching module came in handy. The module is based on [Levenshtein distance](https://en.wikipedia.org/wiki/Levenshtein_distance), and when given a string and list of strings as input, outputs the highest ranked match between the string provided and the choices in the list.
@@ -474,8 +476,8 @@ Not all matches are perfect, so strings are only replaced if they score 90 or ab
 
 If we wanted to be super thorough, we could use the Census Bureau's latest TIGER Roads National Geodatabase:
 
-* http://www.census.gov/geo/maps-data/data/tiger-geodatabases.html
-* http://www2.census.gov/geo/pdfs/maps-data/data/tiger/tgrshp2016/2016_TIGER_GDB_Record_Layouts.pdf
+* [TIGER Geodatabase Home](http://www.census.gov/geo/maps-data/data/tiger-geodatabases.html)
+* [2016 TIGER Geodatabase Guide](http://www2.census.gov/geo/pdfs/maps-data/data/tiger/tgrshp2016/2016_TIGER_GDB_Record_Layouts.pdf)
 
 ![Tiger National Roads](https://raw.githubusercontent.com/Apeder/Open_Street_Map_Scrape_n_munge/master/natlroads.png)
 
